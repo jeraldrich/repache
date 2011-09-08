@@ -1,0 +1,10 @@
+usage: repache.py [-h] -f FILENAME_OPT -u URI_OPT [-m MIMETYPE_OPT]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f FILENAME_OPT, --filename FILENAME_OPT
+                        path to apache access log file
+  -u URI_OPT, --uri URI_OPT
+                        base uri to send requests to
+  -m MIMETYPE_OPT, --mimetype MIMETYPE_OPT
+                        send requests of mimetype
