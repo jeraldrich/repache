@@ -2,6 +2,8 @@ import re
 import urllib2
 import argparse
 
+import mimetype_matches
+
 
 class Repache:
     def __init__(self, options, log_file_name='access.log'):
@@ -9,18 +11,17 @@ class Repache:
         try:
             self.log_file = open(log_file_name, 'r')
         except IOError:
-            print "Error opening file %s"%(log_file_name)
+            print "Error opening file %s" % (log_file_name)
             raise
         self.log_data = []
         self.log_file_name = options.filename_opt
         self.uri = options.uri_opt
-        self.mimetype_matches = self.generate_mimetype_matches()
-
 
     def parse_log(self):
         """
         parse each line in the log and populate log data with matched pattern
         """
+        print "Parsing log..."
         search = re.compile(self.log_line_regex).search
         for line in self.log_file:
             if search(line):
@@ -28,42 +29,38 @@ class Repache:
                 mimetype = self.determine_mimetype(m.group('uri'))
                 self.log_data.append({
                          'mimetype': mimetype,
-                         'server_ip':m.group('ip'),
-                         'uri':m.group('uri'),
-                         'time':m.group('time'),
-                         'status_code':m.group('status_code'),
-                         'referral':m.group('referral'),
-                         'agent':m.group('agent')})
+                         'server_ip': m.group('ip'),
+                         'uri': m.group('uri'),
+                         'time': m.group('time'),
+                         'status_code': m.group('status_code'),
+                         'referral': m.group('referral'),
+                         'agent': m.group('agent')})
         return True
-
 
     def determine_mimetype(self, line_data):
         """
         determine mimetype by comparing passed line_data with mimetype_matches
         """
-        for mimetype_value,mimetype_match in self.mimetype_matches.items():
-            if mimetype_match.match(line_data):
-                return mimetype_value
+        for mimetype, mimetype_regex in mimetype_matches.matches.items():
+            if mimetype_regex.match(line_data):
+                return mimetype
         return "requests"
-
 
     def generate_mimetype_matches(self):
         """
         return dict of compiled regex matches and values for mimetypes
         """
         return {
-                'image':re.compile(r'.*\.(?:png|jpg|jpeg|gif|tiff|svg|bmp|ico)'),
-                'audio':re.compile(r'.*\.(?:mp3|aiff|m3u|wav|ram|mid|aif|snd)'),
-                'application':re.compile(r'.*\.(?:pdf|xls|ogg)'),
-                'video':re.compile(r'.*\.(?:mp2|mpa|mpe|mpeg|mpg|mpv2|mov|qt|avi|movie)'),
-                'html':re.compile(r'.*\.(?:html|htm)'),
-                'json':re.compile(r'.*\.(?:json)'),
-                'javascript':re.compile(r'.*\.(?:javascript|js)'),
-                'css':re.compile(r'.*\.(?:css)'),
-                'xml':re.compile(r'.*\.(?:xml)')
+                'image': re.compile(r'.*\.(?:png|jpg|jpeg|gif|tiff|svg|bmp|ico)'),
+                'audio': re.compile(r'.*\.(?:mp3|aiff|m3u|wav|ram|mid|aif|snd)'),
+                'application': re.compile(r'.*\.(?:pdf|xls|ogg)'),
+                'video': re.compile(r'.*\.(?:mp2|mpa|mpe|mpeg|mpg|mpv2|mov|qt|avi|movie)'),
+                'html': re.compile(r'.*\.(?:html|htm)'),
+                'json': re.compile(r'.*\.(?:json)'),
+                'javascript': re.compile(r'.*\.(?:javascript|js)'),
+                'css': re.compile(r'.*\.(?:css)'),
+                'xml': re.compile(r'.*\.(?:xml)')
               }
-
-
 
     def replay_requests(self, mimetype=''):
         """
@@ -73,14 +70,14 @@ class Repache:
             if mimetype != '':
                 if data['mimetype'] != mimetype:
                     continue
-            request_str = ("http://%s%s"%(self.uri,
-                                              data['uri']))
+            request_str = ("%s%s" % (self.uri,
+                                     data['uri']))
             try:
-                print "sending request: %s"%(request_str)
+                print "sending request: %s" % (request_str)
                 response = urllib2.urlopen((request_str))
             except Exception, e:
-                print "Unable to complete the request: %s"%(request_str)
-                print "Code: %s"%(e.code)
+                print "Unable to complete the request: %s" % (request_str)
+                print "Code: %s" % (e.code)
                 print e.read()
 
 
