@@ -1,10 +1,15 @@
-usage: repache.py [-h] -f FILENAME_OPT -u URI_OPT [-m MIMETYPE_OPT]
+usage: repache.py [-h] -f FILENAME [-u URI] [-m MIMETYPE] [-t THREADS]
+                  [-rt REQUEST_TIMEOUT]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -f FILENAME_OPT, --filename FILENAME_OPT
+  -f FILENAME, --filename FILENAME
                         path to apache access log file
-  -u URI_OPT, --uri URI_OPT
-                        base uri to send requests to
-  -m MIMETYPE_OPT, --mimetype MIMETYPE_OPT
+  -u URI, --uri URI     Base URI to send to. If no URI is given, send requests
+                        to URL in parsed line of file
+  -m MIMETYPE, --mimetype MIMETYPE
                         send requests of mimetype
+  -t THREADS, --threads THREADS
+                        Amount of threads to spawn
+  -rt REQUEST_TIMEOUT, --request_timeout REQUEST_TIMEOUT
+                        Amount of time to wait on server response
