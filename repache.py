@@ -4,9 +4,7 @@ import argparse
 import threading
 import Queue
 import time
-
-import mimetype_matches
-
+import datetime
 
 request_queue = Queue.Queue()
 log_data = []
@@ -20,6 +18,11 @@ class Repache(threading.Thread):
             print "Error opening file %s" % (log_file_name)
             raise
         self.options = options
+        # conv verbose string to false
+        if str(self.options.verbose).lower() in ('false','0'):
+            self.options.verbose = False
+        # generate compiled mimetype regex matches
+        self.mimetype_matches = self.generate_mimetype_matches()
         # init local thread storage for parsed_log data sharing between threads
         threading.Thread.__init__(self)
         self.queue = request_queue
@@ -32,7 +35,9 @@ class Repache(threading.Thread):
         # if log has already been parsed, do not parse file again
         if log_data:
             return True
-        print "Parsing log..."
+        if self.options.verbose:
+            print "Parsing log.."
+        then = datetime.datetime.now()
         search = re.compile(self.log_line_regex).search
         for line in self.log_file:
             if search(line):
@@ -46,13 +51,17 @@ class Repache(threading.Thread):
                          'status_code': m.group('status_code'),
                          'referral': m.group('referral'),
                          'agent': m.group('agent')})
+        if self.options.verbose:
+            now = datetime.datetime.now()
+            took_time_results = "%.2f"%((now - then).total_seconds())
+            print "Took %s seconds to parse"%(took_time_results)
         return True
 
     def determine_mimetype(self, line_data):
         """
         determine mimetype by comparing passed line_data with mimetype_matches
         """
-        for mimetype, mimetype_regex in mimetype_matches.matches.items():
+        for mimetype, mimetype_regex in self.mimetype_matches.items():
             if mimetype_regex.match(line_data):
                 return mimetype
         return "requests"
@@ -85,7 +94,8 @@ class Repache(threading.Thread):
             request_str = ("%s%s" % (self.options.uri,
                                      data['uri']))
             try:
-                print "sending request: %s" % (request_str)
+                if self.options.verbose:
+                    print "sending request: %s" % (request_str)
                 response = urllib2.urlopen((request_str), '',
                         int(self.options.request_timeout))
             except urllib2.HTTPError, e:
@@ -115,6 +125,8 @@ if __name__ == '__main__':
                        help="Amount of threads to spawn")
     parser.add_argument('-rt', '--request_timeout', dest='request_timeout', default='5',
                        help="Amount of time to wait on server response")
+    parser.add_argument('-v', '--verbose', dest='verbose', default='true',
+                       help="Verbose mode")
     args = parser.parse_args()
 
     # init pool of threads
