@@ -10,14 +10,14 @@ request_queue = Queue.Queue()
 log_data = []
 
 class Repache(threading.Thread):
-    def __init__(self, options, log_file_name='access.log'):
+    def __init__(self, options):
         self.log_line_regex = r'(?P<ip>[.:0-9a-fA-F]+) - - \[(?P<time>.*?)\] "GET (?P<uri>.*?) HTTP/1.\d" (?P<status_code>\d+) \d+ "(?P<referral>.*?)" "(?P<agent>.*?)"'
-        try:
-            self.log_file = open(log_file_name, 'r')
-        except IOError:
-            print "Error opening file %s" % (log_file_name)
-            raise
         self.options = options
+        try:
+            self.log_file = open(self.options.log_file_name, 'r')
+        except IOError:
+            print "Error opening file %s" % (self.options.log_file_name)
+            raise
         # conv verbose string to false
         if str(self.options.verbose).lower() in ('false','0'):
             self.options.verbose = False
@@ -113,7 +113,7 @@ class Repache(threading.Thread):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--filename', dest='filename',
+    parser.add_argument('-f', '--log_file_name', dest='log_file_name',
                        help="path to apache access log file",
                        required=True)
     parser.add_argument('-u', '--uri', dest='uri', default='',
